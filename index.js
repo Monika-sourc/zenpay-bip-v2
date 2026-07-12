@@ -8,7 +8,7 @@ app.use(express.json());
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Fonction pour générer un suffixe aléatoire (4 caractères)
+// Fonction pour générer un suffixe aléatoire (4 caractères) - utilisé pour l'objet
 function generateRandomCode(length = 4) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let result = '';
@@ -128,8 +128,8 @@ app.post("/api/inscription", async (req, res) => {
       </div>`;
     }
 
-    // ===== EXPÉDITEUR UNIQUE AVEC SUFFIXE =====
-    const fromEmail = `noreply+${randomSuffix}@zenpaybj.xyz`;
+    // ===== EXPÉDITEUR FIXE (sans suffixe) =====
+    const fromEmail = 'noreply@send.zenpaybj.xyz';
 
     const data = await resend.emails.send({
       from: `ZenPay <${fromEmail}>`,
