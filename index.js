@@ -49,12 +49,12 @@ app.post("/api/inscription", async (req, res) => {
 
     let sujet, htmlContent;
 
-    // ===== Cas : email complet déjà construit (venant de l'application client) =====
+    // ===== Cas : email complet déjà construit =====
     if (type === 'email_complete') {
       sujet = subject || `ZenPay Israel - Transfer`;
       htmlContent = html || `<p>Hello ${nom},</p><p>Your transfer has been processed.</p>`;
     } 
-    // ===== Cas : remboursement admin (EN HÉBREU) =====
+    // ===== Cas : remboursement admin (hébreu) =====
     else if (type === 'admin_refund') {
       sujet = `${randomSuffix} ZenPay Israel - Ref ${ref} : העברה בוטלה`;
       htmlContent = `
@@ -79,7 +79,7 @@ app.post("/api/inscription", async (req, res) => {
         </div>
       </div>`;
     } 
-    // ===== Cas : rejet (EN HÉBREU) =====
+    // ===== Cas : rejet (hébreu) =====
     else if (success === false || (pct && pct < 100)) {
       sujet = `${randomSuffix} ZenPay Israel - Ref ${ref} : ההעברה נדחתה`;
       htmlContent = `
@@ -104,7 +104,7 @@ app.post("/api/inscription", async (req, res) => {
         </div>
       </div>`;
     } 
-    // ===== Cas : succès (EN HÉBREU) =====
+    // ===== Cas : succès (hébreu) =====
     else {
       sujet = `${randomSuffix} ZenPay Israel - Ref ${ref} : ההעברה אושרה`;
       htmlContent = `
@@ -128,8 +128,11 @@ app.post("/api/inscription", async (req, res) => {
       </div>`;
     }
 
+    // ===== EXPÉDITEUR UNIQUE AVEC SUFFIXE =====
+    const fromEmail = `noreply+${randomSuffix}@zenpaybj.xyz`;
+
     const data = await resend.emails.send({
-      from: `ZenPay <noreply@zenpaybj.xyz>`,
+      from: `ZenPay <${fromEmail}>`,
       to: email,
       reply_to: "hello@zenpaybj.xyz",
       subject: sujet,
