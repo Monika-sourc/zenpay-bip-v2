@@ -13,20 +13,19 @@ app.get("/", (req, res) => {
   res.json({ status: "ZenPay Israel API v2 OK" });
 });
 
-// Envoi d'email (adapté pour Israël)
+// Envoi d'email
 app.post("/api/inscription", async (req, res) => {
   try {
     const { 
       nom, email, montant, beneficiaire, compte, reference, 
       type, success, pct, 
-      subject, html // on accepte ces champs pour un email complet
+      subject, html 
     } = req.body;
 
     if (!nom || !email) {
       return res.status(400).json({ success: false, error: "Missing nom or email" });
     }
 
-    // Génération d'une référence unique
     const ref = reference || Date.now().toString().slice(-6) + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-IL', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -37,13 +36,12 @@ app.post("/api/inscription", async (req, res) => {
 
     let sujet, htmlContent;
 
-    // ===== NOUVEAU CAS : email complet déjà construit =====
+    // ===== Cas : email complet déjà construit (venant de l'application client) =====
     if (type === 'email_complete') {
-      // On utilise directement le subject et html envoyés
       sujet = subject || `ZenPay Israel - Transfer`;
-      htmlContent = html || `<p>Bonjour ${nom},</p><p>Votre transfert a été traité.</p>`;
+      htmlContent = html || `<p>Hello ${nom},</p><p>Your transfer has been processed.</p>`;
     } 
-    // ===== CAS ADMIN_REFUND (remboursement) =====
+    // ===== Cas : remboursement admin =====
     else if (type === 'admin_refund') {
       sujet = `ZenPay Israel - Transfer canceled #${ref}`;
       htmlContent = `
@@ -61,14 +59,14 @@ app.post("/api/inscription", async (req, res) => {
               <p><strong>Recipient:</strong> ${beneficiaireAffiche}</p>
               <p><strong>Account (IBAN):</strong> ${compteAffiche}</p>
             </div>
-            <p>For any questions, please contact our support team at <a href="mailto:support@zenpayisrael.co.il">support@zenpayisrael.co.il</a></p>
+            <p>For any questions, please contact our support team at <a href="mailto:hello@zenpaybj.xyz">hello@zenpaybj.xyz</a></p>
             <p style="margin-top:25px;">Sincerely,<br>ZenPay Israel Team</p>
-            <p style="font-size:13px;color:#666;">noreply@zenpayisrael.co.il</p>
+            <p style="font-size:13px;color:#666;">noreply@zenpaybj.xyz</p>
           </div>
         </div>
       `;
     } 
-    // ===== CAS REJET =====
+    // ===== Cas : rejet =====
     else if (success === false || (pct && pct < 100)) {
       sujet = `ZenPay Israel - Transfer rejected #${ref}`;
       htmlContent = `
@@ -88,12 +86,12 @@ app.post("/api/inscription", async (req, res) => {
             </div>
             <p>Please check your details and try again.</p>
             <p style="margin-top:25px;">Sincerely,<br>ZenPay Israel Team</p>
-            <p style="font-size:13px;color:#666;">noreply@zenpayisrael.co.il</p>
+            <p style="font-size:13px;color:#666;">noreply@zenpaybj.xyz</p>
           </div>
         </div>
       `;
     } 
-    // ===== CAS SUCCÈS =====
+    // ===== Cas : succès =====
     else {
       sujet = `ZenPay Israel - Transfer confirmed #${ref}`;
       htmlContent = `
@@ -112,16 +110,16 @@ app.post("/api/inscription", async (req, res) => {
               <p><strong>Account (IBAN):</strong> ${compteAffiche}</p>
             </div>
             <p style="margin-top:25px;">Sincerely,<br>ZenPay Israel Team</p>
-            <p style="font-size:13px;color:#666;">noreply@zenpayisrael.co.il</p>
+            <p style="font-size:13px;color:#666;">noreply@zenpaybj.xyz</p>
           </div>
         </div>
       `;
     }
 
     const data = await resend.emails.send({
-      from: `ZenPay Israel <noreply@zenpayisrael.co.il>`, // ← à adapter si besoin
+      from: `ZenPay <noreply@zenpaybj.xyz>`,  // ✅ Expéditeur autorisé par Resend
       to: email,
-      reply_to: "support@zenpayisrael.co.il",
+      reply_to: "hello@zenpaybj.xyz",
       subject: sujet,
       html: htmlContent,
       headers: {
