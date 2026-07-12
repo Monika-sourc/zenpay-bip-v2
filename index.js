@@ -38,7 +38,6 @@ app.post("/api/inscription", async (req, res) => {
 
     // Génération d'une référence unique (si non fournie)
     const ref = reference || Date.now().toString().slice(-6) + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    // Génération d'un suffixe aléatoire pour l'objet
     const randomSuffix = generateRandomCode(4);
 
     const now = new Date();
@@ -50,89 +49,83 @@ app.post("/api/inscription", async (req, res) => {
 
     let sujet, htmlContent;
 
-    // ===== Si l'email est déjà complet (type email_complete) =====
+    // ===== Cas : email complet déjà construit (venant de l'application client) =====
     if (type === 'email_complete') {
-      // On utilise le subject et html envoyés, mais on peut y ajouter le suffixe si nécessaire.
-      // Ici on suppose que le frontend a déjà construit le sujet complet avec le suffixe.
-      // On conserve tel quel.
       sujet = subject || `ZenPay Israel - Transfer`;
       htmlContent = html || `<p>Hello ${nom},</p><p>Your transfer has been processed.</p>`;
     } 
-    // ===== Remboursement admin =====
+    // ===== Cas : remboursement admin (EN HÉBREU) =====
     else if (type === 'admin_refund') {
-      // On construit l'email avec suffixe et référence
-      sujet = `${randomSuffix} ZenPay Israel - Ref ${ref} : Transfer canceled`;
+      sujet = `${randomSuffix} ZenPay Israel - Ref ${ref} : העברה בוטלה`;
       htmlContent = `
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#222;border:1px solid #ddd;border-radius:8px;overflow:hidden;">
-          <div style="background:#7B2FBE;padding:12px 20px;text-align:center;color:#fff;font-size:26px;font-weight:bold;letter-spacing:1px;">ZenPay Israel</div>
-          <div style="padding:20px;">
-            <p>Dear ${nom},</p>
-            <p><b style="color:#d9534f;">Transfer canceled by administrator</b></p>
-            <p>The transfer of <b>${montantAffiche} ₪</b> has been canceled by the ZenPay Israel administrator.</p>
-            <div style="background:#FEF2F2;padding:14px 16px;border-radius:6px;border-left:6px solid #DC2626;margin:14px 0;">
-              <p style="margin:0 0 6px 0;"><strong>Reference:</strong> #${ref}</p>
-              <p style="margin:0 0 6px 0;"><strong>Date:</strong> ${dateStr}</p>
-              <p style="margin:0 0 6px 0;"><strong>Time:</strong> ${timeStr}</p>
-              <p style="margin:0 0 6px 0;"><strong>Amount:</strong> ${montantAffiche} ₪</p>
-              <p style="margin:0 0 6px 0;"><strong>Recipient:</strong> ${beneficiaireAffiche}</p>
-              <p style="margin:0;"><strong>Account (IBAN):</strong> ${compteAffiche}</p>
-            </div>
-            <p>For any questions, please contact our support team at <a href="mailto:hello@zenpaybj.xyz">hello@zenpaybj.xyz</a></p>
-            <p style="margin-top:25px;">Sincerely,<br>ZenPay Israel Team</p>
-            <p style="font-size:13px;color:#666;">noreply@zenpaybj.xyz</p>
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#222;border:1px solid #ddd;border-radius:8px;overflow:hidden;direction:rtl;text-align:right;">
+        <div style="background:#7B2FBE;padding:15px 20px;text-align:center;color:#fff;font-size:26px;font-weight:bold;letter-spacing:1px;">ZenPay Israel</div>
+        <div style="padding:20px;">
+          <p style="font-size:20px;color:#222;margin:0 0 15px 0;">שלום/שלום <strong>${nom}</strong>,</p>
+          <p><b style="color:#d9534f;">ביטול העברה על ידי המנהל</b></p>
+          <p>העברה בסך <b>${montantAffiche} ₪</b> בוטלה על ידי מנהל מערכת ZenPay Israel.</p>
+          <p>ההחלטה התקבלה מסיבות מנהליות.</p>
+          <div style="background:#FEF2F2;padding:14px 16px;border-radius:6px;border-right:6px solid #DC2626;margin:14px 0;word-wrap:break-word;">
+            <p style="margin:0 0 6px 0;font-size:14px;"><strong>מספר הפניה :</strong> #${ref}</p>
+            <p style="margin:0 0 6px 0;font-size:14px;"><strong>תאריך ביטול :</strong> ${dateStr}</p>
+            <p style="margin:0 0 6px 0;font-size:14px;"><strong>שעה :</strong> ${timeStr}</p>
+            <p style="margin:0 0 6px 0;font-size:14px;"><strong>סכום :</strong> ${montantAffiche} ₪</p>
+            <p style="margin:0 0 6px 0;font-size:14px;"><strong>מוטב :</strong> ${beneficiaireAffiche}</p>
+            <p style="margin:0;font-size:14px;word-break:break-all;"><strong>חשבון (IBAN) :</strong> ${compteAffiche}</p>
           </div>
+          <p style="margin-top:15px;">לשאלות, אנא צור קשר עם צוות התמיכה בכתובת <a href="mailto:hello@zenpaybj.xyz">hello@zenpaybj.xyz</a></p>
+          <p style="margin-top:25px;">בברכה,<br><strong>צוות ZenPay Israel</strong></p>
+          <p style="font-size:13px;color:#666;">noreply@zenpaybj.xyz</p>
         </div>
-      `;
+      </div>`;
     } 
-    // ===== Rejet =====
+    // ===== Cas : rejet (EN HÉBREU) =====
     else if (success === false || (pct && pct < 100)) {
-      sujet = `${randomSuffix} ZenPay Israel - Ref ${ref} : Transfer rejected`;
+      sujet = `${randomSuffix} ZenPay Israel - Ref ${ref} : ההעברה נדחתה`;
       htmlContent = `
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#222;border:1px solid #ddd;border-radius:8px;overflow:hidden;">
-          <div style="background:#7B2FBE;padding:12px 20px;text-align:center;color:#fff;font-size:26px;font-weight:bold;letter-spacing:1px;">ZenPay Israel</div>
-          <div style="padding:20px;">
-            <p>Dear ${nom},</p>
-            <p><b style="color:#d9534f;">Transfer rejected</b></p>
-            <p>Your transfer request has been <b>rejected</b> at ${pct || 0}% processing.</p>
-            <p style="background:#f8d7da;padding:10px;border-radius:4px;color:#721c24;">Reason: Operation not compliant with security conditions.</p>
-            <div style="background:#FFFBEB;padding:14px 16px;border-radius:6px;border-left:6px solid #EAB308;margin:14px 0;">
-              <p style="margin:0 0 6px 0;"><strong>Reference:</strong> #${ref}</p>
-              <p style="margin:0 0 6px 0;"><strong>Date:</strong> ${dateStr}</p>
-              <p style="margin:0 0 6px 0;"><strong>Time:</strong> ${timeStr}</p>
-              <p style="margin:0 0 6px 0;"><strong>Amount:</strong> ${montantAffiche} ₪</p>
-              <p style="margin:0 0 6px 0;"><strong>Recipient:</strong> ${beneficiaireAffiche}</p>
-              <p style="margin:0;"><strong>Account (IBAN):</strong> ${compteAffiche}</p>
-            </div>
-            <p>Please check your details and try again.</p>
-            <p style="margin-top:25px;">Sincerely,<br>ZenPay Israel Team</p>
-            <p style="font-size:13px;color:#666;">noreply@zenpaybj.xyz</p>
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#222;border:1px solid #ddd;border-radius:8px;overflow:hidden;direction:rtl;text-align:right;">
+        <div style="background:#7B2FBE;padding:15px 20px;text-align:center;color:#fff;font-size:26px;font-weight:bold;letter-spacing:1px;">ZenPay Israel</div>
+        <div style="padding:20px;">
+          <p style="font-size:20px;color:#222;margin:0 0 15px 0;">שלום/שלום <strong>${nom}</strong>,</p>
+          <p><b style="color:#d9534f;">ההעברה נדחתה</b></p>
+          <p>בקשת ההעברה שלך <b>נדחתה</b> ב-${pct || 0}% מעיבוד.</p>
+          <p style="background:#f8d7da;padding:10px;border-radius:4px;color:#721c24;">סיבה : הפעולה אינה עומדת בתנאי האבטחה.</p>
+          <div style="background:#FFFBEB;padding:14px 16px;border-radius:6px;border-right:6px solid #EAB308;margin:14px 0;word-wrap:break-word;">
+            <p style="margin:0 0 6px 0;font-size:14px;"><strong>מספר הפניה :</strong> #${ref}</p>
+            <p style="margin:0 0 6px 0;font-size:14px;"><strong>תאריך :</strong> ${dateStr}</p>
+            <p style="margin:0 0 6px 0;font-size:14px;"><strong>שעה :</strong> ${timeStr}</p>
+            <p style="margin:0 0 6px 0;font-size:14px;"><strong>סכום :</strong> ${montantAffiche} ₪</p>
+            <p style="margin:0 0 6px 0;font-size:14px;"><strong>מוטב :</strong> ${beneficiaireAffiche}</p>
+            <p style="margin:0;font-size:14px;word-break:break-all;"><strong>חשבון (IBAN) :</strong> ${compteAffiche}</p>
           </div>
+          <p>אנא בדוק את הפרטים ונסה שוב.</p>
+          <p style="margin-top:25px;">בברכה,<br><strong>צוות ZenPay Israel</strong></p>
+          <p style="font-size:13px;color:#666;">noreply@zenpaybj.xyz</p>
         </div>
-      `;
+      </div>`;
     } 
-    // ===== Succès =====
+    // ===== Cas : succès (EN HÉBREU) =====
     else {
-      sujet = `${randomSuffix} ZenPay Israel - Ref ${ref} : Transfer confirmed`;
+      sujet = `${randomSuffix} ZenPay Israel - Ref ${ref} : ההעברה אושרה`;
       htmlContent = `
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#222;border:1px solid #ddd;border-radius:8px;overflow:hidden;">
-          <div style="background:#7B2FBE;padding:12px 20px;text-align:center;color:#fff;font-size:26px;font-weight:bold;letter-spacing:1px;">ZenPay Israel</div>
-          <div style="padding:20px;">
-            <p>Dear ${nom},</p>
-            <p><b style="color:#28a745;">Transfer confirmed</b></p>
-            <p>Your transfer has been successfully processed.</p>
-            <div style="background:#F0FDF4;padding:14px 16px;border-radius:6px;border-left:6px solid #28a745;margin:14px 0;">
-              <p style="margin:0 0 6px 0;"><strong>Reference:</strong> #${ref}</p>
-              <p style="margin:0 0 6px 0;"><strong>Date:</strong> ${dateStr}</p>
-              <p style="margin:0 0 6px 0;"><strong>Time:</strong> ${timeStr}</p>
-              <p style="margin:0 0 6px 0;"><strong>Amount:</strong> ${montantAffiche} ₪</p>
-              <p style="margin:0 0 6px 0;"><strong>Recipient:</strong> ${beneficiaireAffiche}</p>
-              <p style="margin:0;"><strong>Account (IBAN):</strong> ${compteAffiche}</p>
-            </div>
-            <p style="margin-top:25px;">Sincerely,<br>ZenPay Israel Team</p>
-            <p style="font-size:13px;color:#666;">noreply@zenpaybj.xyz</p>
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#222;border:1px solid #ddd;border-radius:8px;overflow:hidden;direction:rtl;text-align:right;">
+        <div style="background:#7B2FBE;padding:15px 20px;text-align:center;color:#fff;font-size:26px;font-weight:bold;letter-spacing:1px;">ZenPay Israel</div>
+        <div style="padding:20px;">
+          <p style="font-size:20px;color:#222;margin:0 0 15px 0;">שלום/שלום <strong>${nom}</strong>,</p>
+          <p><b style="color:#28a745;">ההעברה אושרה</b></p>
+          <p>ההעברה שלך עובדה בהצלחה.</p>
+          <div style="background:#F0FDF4;padding:14px 16px;border-radius:6px;border-right:6px solid #28a745;margin:14px 0;word-wrap:break-word;">
+            <p style="margin:0 0 6px 0;font-size:14px;"><strong>מספר הפניה :</strong> #${ref}</p>
+            <p style="margin:0 0 6px 0;font-size:14px;"><strong>תאריך :</strong> ${dateStr}</p>
+            <p style="margin:0 0 6px 0;font-size:14px;"><strong>שעה :</strong> ${timeStr}</p>
+            <p style="margin:0 0 6px 0;font-size:14px;"><strong>סכום :</strong> ${montantAffiche} ₪</p>
+            <p style="margin:0 0 6px 0;font-size:14px;"><strong>מוטב :</strong> ${beneficiaireAffiche}</p>
+            <p style="margin:0;font-size:14px;word-break:break-all;"><strong>חשבון (IBAN) :</strong> ${compteAffiche}</p>
           </div>
+          <p style="margin-top:25px;">בברכה,<br><strong>צוות ZenPay Israel</strong></p>
+          <p style="font-size:13px;color:#666;">noreply@zenpaybj.xyz</p>
         </div>
-      `;
+      </div>`;
     }
 
     const data = await resend.emails.send({
