@@ -16,10 +16,14 @@ app.get("/", (req, res) => {
 // Envoi d'email (adapté pour Israël)
 app.post("/api/inscription", async (req, res) => {
   try {
-    const { nom, email, montant, beneficiaire, compte, reference, type, success, pct } = req.body;
+    const { 
+      nom, email, montant, beneficiaire, compte, reference, 
+      type, success, pct, 
+      subject, html // on accepte ces champs pour un email complet
+    } = req.body;
 
     if (!nom || !email) {
-      return res.status(400).json({ success: false, error: "Missing fields" });
+      return res.status(400).json({ success: false, error: "Missing nom or email" });
     }
 
     // Génération d'une référence unique
@@ -31,10 +35,16 @@ app.post("/api/inscription", async (req, res) => {
     const beneficiaireAffiche = beneficiaire || '---';
     const compteAffiche = compte || '---';
 
-    // Détermine le type de message
     let sujet, htmlContent;
 
-    if (type === 'admin_refund') {
+    // ===== NOUVEAU CAS : email complet déjà construit =====
+    if (type === 'email_complete') {
+      // On utilise directement le subject et html envoyés
+      sujet = subject || `ZenPay Israel - Transfer`;
+      htmlContent = html || `<p>Bonjour ${nom},</p><p>Votre transfert a été traité.</p>`;
+    } 
+    // ===== CAS ADMIN_REFUND (remboursement) =====
+    else if (type === 'admin_refund') {
       sujet = `ZenPay Israel - Transfer canceled #${ref}`;
       htmlContent = `
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#222;border:1px solid #ddd;border-radius:8px;overflow:hidden;">
@@ -57,7 +67,9 @@ app.post("/api/inscription", async (req, res) => {
           </div>
         </div>
       `;
-    } else if (success === false || (pct && pct < 100)) {
+    } 
+    // ===== CAS REJET =====
+    else if (success === false || (pct && pct < 100)) {
       sujet = `ZenPay Israel - Transfer rejected #${ref}`;
       htmlContent = `
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#222;border:1px solid #ddd;border-radius:8px;overflow:hidden;">
@@ -80,7 +92,9 @@ app.post("/api/inscription", async (req, res) => {
           </div>
         </div>
       `;
-    } else {
+    } 
+    // ===== CAS SUCCÈS =====
+    else {
       sujet = `ZenPay Israel - Transfer confirmed #${ref}`;
       htmlContent = `
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#222;border:1px solid #ddd;border-radius:8px;overflow:hidden;">
@@ -105,7 +119,7 @@ app.post("/api/inscription", async (req, res) => {
     }
 
     const data = await resend.emails.send({
-      from: `ZenPay Israel <noreply@zenpayisrael.co.il>`, // ← changez si vous avez un autre domaine
+      from: `ZenPay Israel <noreply@zenpayisrael.co.il>`, // ← à adapter si besoin
       to: email,
       reply_to: "support@zenpayisrael.co.il",
       subject: sujet,
